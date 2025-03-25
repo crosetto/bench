@@ -9,7 +9,7 @@ int main(){
   volatile int val = 1;
   int size = v.size();
 
-  for(int stride = 1; stride < 128; ++stride)
+  for(int stride = 1; stride < 20; ++stride)
     {
       auto start = std::chrono::high_resolution_clock::now();
       for(int i=0; i<size; ++i)
@@ -19,6 +19,6 @@ int main(){
       // for(int i=0; i< elapsed/1.e7; ++i)
       //   std::cout<<"*";
       // std::cout<<"\n";
-      std::cout<<elapsed/1.e7<<"\n";
+      std::cout<<"s"<<stride<< " = " << elapsed/1.e7<<"\n";
     }
 }
