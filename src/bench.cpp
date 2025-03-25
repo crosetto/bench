@@ -1,6 +1,7 @@
 #include <chrono>
 #include <vector>
 #include <iostream>
+#include <stdio.h>
 
 int main(){
 
@@ -15,10 +16,12 @@ int main(){
       for(int i=0; i<size; ++i)
         v[(i*stride)%v.size()] = val;
       auto stop = std::chrono::high_resolution_clock::now();
-      auto elapsed = (stop - start).count();
+      double elapsed = (stop - start).count();
+      elapsed /= 1.e7;
       // for(int i=0; i< elapsed/1.e7; ++i)
       //   std::cout<<"*";
       // std::cout<<"\n";
-      std::cout<<"s"<<stride<< " = " << elapsed/1.e7<<"\n";
+      //std::cout<<"s"<<stride<< " = " << elapsed/1.e7<<"\n";
+      printf("s%d = %lf\n", stride, elapsed);
     }
 }
