@@ -1,12 +1,9 @@
-//#define UNCERTAINTY
 #include <chrono>
 #include <vector>
 #include <array>
 #include <iostream>
 #include <algorithm>
-#ifdef UNCERTAINTY
 #include "uxhw.h"
-#endif
 
 // toy code to estimate a roofline performance model for 1 core of a microprocessor:
 // - estimates the hardware bandwidth by writing data to a std::vector
@@ -89,7 +86,6 @@ int main(){
     perf[i] = peak_performance();
   }
 
-#ifdef UNCERTAINTY
   // creates a distribution based on the measured times
   auto b = UxHwDoubleDistFromSamples(band.data(), band.size());
   auto p = UxHwDoubleDistFromSamples(perf.data(), perf.size());
@@ -107,5 +103,4 @@ int main(){
 
   //the highes the average of this number, the better (performance-wise) our hardware adapts to the user codes
   std::cout<<"r = "<<roofline(arithmetic_intensity)<<"\n";
-#endif
 }
