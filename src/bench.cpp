@@ -23,12 +23,13 @@ auto bandwidth(){
  }
 
 auto peak_performance(){
+  using float_t = double;
   std::size_t size = 1e6;
   constexpr int simd=8;
-  volatile float va = 0.f, vb = 0.f;
-  alignas(32) std::array<float, simd> a;
-  alignas(32) std::array<float, simd> b;
-  alignas(32) std::array<float, simd> arr;
+  volatile float_t va = 0.f, vb = 0.f;
+  alignas(32) std::array<float_t, simd> a;
+  alignas(32) std::array<float_t, simd> b;
+  alignas(32) std::array<float_t, simd> arr;
   auto start = std::chrono::high_resolution_clock::now();
 
   for(auto j=0; j<simd; ++j){
@@ -37,7 +38,7 @@ auto peak_performance(){
     arr[j] = 0.f;
   }
   
-  for(auto i=0; i<size; ++i){
+  for(std::size_t i=0; i<size; ++i){
     for(auto j=0; j<simd; ++j){
       auto fma0 = a[j] + b[j]*a[j];
       auto fma1 = a[j] - b[j]*arr[j];
@@ -47,12 +48,11 @@ auto peak_performance(){
       auto fma5 = fma2 + (fma1)*(fma0);
       auto fma6 = fma3 + (fma4)*(fma5);
       auto fma7 = fma4 + (fma3)*(fma5);
-      auto fma8 = fma5 + (fma3)*(fma4);
-      arr[j] += (fma7)*(fma8); //fma9 : 20 flops per iteration
+      arr[j] += (fma6)*(fma7); //fma8 : 18 flops per iteration
     }
   }
 
-  double flops = size*simd*20;
+  double flops = size*simd*18;
   auto stop = std::chrono::high_resolution_clock::now();
   double elapsed = (stop - start)/1.s;
   std::cout<<"performance"<< " = " << flops/elapsed/1e9<<" GFLOP/s\n";
