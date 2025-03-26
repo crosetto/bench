@@ -1,27 +1,93 @@
+#define UNCERTAINTY
 #include <chrono>
 #include <vector>
+#include <array>
 #include <iostream>
-#include <stdio.h>
+#ifdef UNCERTAINTY
+#include "uxhw.h"
+#endif
+
+using namespace std::literals;
+
+auto bandwidth(){
+ std::vector<std::int32_t> v(2<<25, 0); // 128 MiB
+ volatile int val = 1;
+ auto start = std::chrono::high_resolution_clock::now();
+ for(auto& i : v){
+   i=val;
+ }
+ auto stop = std::chrono::high_resolution_clock::now();
+ double elapsed = (stop - start)/1.s;
+ std::cout<<"bandwidth"<< " = " << v.size()*4/elapsed/1e9<<" GB/s\n";
+ return elapsed;
+ }
+
+auto peak_performance(){
+  std::size_t size = 1e6;
+  constexpr int simd=8;
+  volatile float va = 0.f, vb = 0.f;
+  alignas(32) std::array<float, simd> a;
+  alignas(32) std::array<float, simd> b;
+  alignas(32) std::array<float, simd> arr;
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for(auto j=0; j<simd; ++j){
+    a[j] = va;
+    b[j] = vb;
+    arr[j] = 0.f;
+  }
+  
+  for(auto i=0; i<size; ++i){
+    for(auto j=0; j<simd; ++j){
+      auto fma0 = a[j] + b[j]*a[j];
+      auto fma1 = a[j] - b[j]*arr[j];
+      auto fma2 = arr[j] + a[j]*arr[j];
+      auto fma3 = fma0 + (fma1)*(fma2);
+      auto fma4 = fma1 + (fma2)*(fma0);
+      auto fma5 = fma2 + (fma1)*(fma0);
+      auto fma6 = fma3 + (fma4)*(fma5);
+      auto fma7 = fma4 + (fma3)*(fma5);
+      auto fma8 = fma5 + (fma3)*(fma4);
+      arr[j] += (fma7)*(fma8); //fma9 : 20 flops per iteration
+    }
+  }
+
+  double flops = size*simd*20;
+  auto stop = std::chrono::high_resolution_clock::now();
+  double elapsed = (stop - start)/1.s;
+  std::cout<<"performance"<< " = " << flops/elapsed/1e9<<" GFLOP/s\n";
+  for(auto j=0; j<simd; ++j){
+    if(!arr[j])
+      std::cout<<" ";
+  }
+  return elapsed;
+  
+}
 
 int main(){
 
 
-  std::vector<std::int32_t> v(2<<25, 0); // 128 MiB
-  volatile int val = 1;
-  int size = v.size();
+  int samples = 10;
+  std::vector<double> band(samples);
+  std::vector<double> perf(samples);
+  
+  for(int i=0; i<samples; ++i){
+    band[i] = bandwidth();
+    perf[i] = peak_performance();
+  }
 
-  for(int stride = 1; stride < 20; ++stride)
-    {
-      auto start = std::chrono::high_resolution_clock::now();
-      for(int i=0; i<size; ++i)
-        v[(i*stride)%v.size()] = val;
-      auto stop = std::chrono::high_resolution_clock::now();
-      double elapsed = (stop - start).count();
-      elapsed /= 1.e7;
-      // for(int i=0; i< elapsed/1.e7; ++i)
-      //   std::cout<<"*";
-      // std::cout<<"\n";
-      //std::cout<<"s"<<stride<< " = " << elapsed/1.e7<<"\n";
-      printf("s%d = %lf\n", stride, elapsed);
-    }
+#ifdef UNCERTAINTY
+  auto b = UxHwDoubleDistFromSamples(band.data(), band.size());
+  auto p = UxHwDoubleDistFromSamples(perf.data(), perf.size());
+  auto arithmetic_intensity = UxHwDoubleUniformDist(0., 5.0);
+  std::cout<<"b = "<<b<<"\n";
+  std::cout<<"p = "<<p<<"\n";
+  std::cout<<"arithmetic_intensity = "<<arithmetic_intensity<<"\n";
+  
+  auto roofline = [&](double ai){
+    return std::max(b*ai, p);
+  };
+
+  std::cout<<"r = "<<roofline(arithmetic_intensity)<<"\n";
+#endif
 }
