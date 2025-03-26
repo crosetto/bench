@@ -69,7 +69,7 @@ auto peak_performance(){
   double elapsed = (stop - start)/1.s;
   std::cout<<"performance"<< " = " << flops/elapsed/1e9<<" GFLOP/s\n";
 
-  if(!std::ranges::max(arr)) // makes sure the loop is not optimized away by the compiler
+  if(!std::max_element(arr.begin(), arr.end())) // makes sure the loop is not optimized away by the compiler
     std::cout<<" ";
   return elapsed;
   
@@ -91,7 +91,7 @@ int main(){
   auto p = UxHwDoubleDistFromSamples(perf.data(), perf.size());
 
   // creates a distribution for the arithmetic intensity of the "user codes"
-  auto arithmetic_intensity = UxHwDoubleUniformDist(0., 5.0);
+  auto arithmetic_intensity = UxHwDoubleUniformDist(0.1, 5.0);
 
   std::cout<<"b = "<<b<<"\n";
   std::cout<<"p = "<<p<<"\n";
