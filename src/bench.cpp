@@ -91,7 +91,7 @@ int main(){
   auto p = UxHwDoubleDistFromSamples(perf.data(), perf.size());
 
   // creates a distribution for the arithmetic intensity of the "user codes"
-  auto arithmetic_intensity = UxHwDoubleUniformDist(0.1, 5.0);
+  auto arithmetic_intensity = UxHwDoubleUniformDist(0., 5.0);
 
   std::cout<<"b = "<<b<<"\n";
   std::cout<<"p = "<<p<<"\n";
